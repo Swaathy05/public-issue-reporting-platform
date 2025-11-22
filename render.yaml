@@ -11,6 +11,12 @@ services:
         generateValue: true
       - key: PORT
         value: 8080
+      - key: UPLOAD_DIR
+        value: /opt/render/project/src/uploads/
+    disk:
+      name: uploads-disk
+      mountPath: /opt/render/project/src/uploads
+      sizeGB: 1
     healthCheckPath: /actuator/health
 
 databases:

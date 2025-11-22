@@ -808,7 +808,7 @@
   if (hash && views[hash]) {
     showView(hash);
   } else {
-    showView('home');
+  showView('home');
   }
 })();
 

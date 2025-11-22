@@ -11,6 +11,7 @@ import com.publicservice.repository.IssueRepository;
 import com.publicservice.repository.IssueUpdateRepository;
 import com.publicservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -44,7 +45,8 @@ public class IssueService {
     @Autowired
     private EmailService emailService;
     
-    private final String uploadDir = "uploads/";
+    @Value("${file.upload-dir:uploads/}")
+    private String uploadDir;
     
     public IssueResponse createIssue(IssueRequest issueRequest, User reportedBy, MultipartFile photo) {
         Issue issue = new Issue();
@@ -151,23 +153,31 @@ public class IssueService {
     
     private String savePhoto(MultipartFile photo) {
         try {
+            // Normalize upload directory path (ensure it ends with separator)
+            String normalizedUploadDir = uploadDir.endsWith("/") || uploadDir.endsWith("\\") 
+                ? uploadDir 
+                : uploadDir + "/";
+            
             // Create upload directory if it doesn't exist
-            Path uploadPath = Paths.get(uploadDir);
+            Path uploadPath = Paths.get(normalizedUploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
             
             // Generate unique filename
             String originalFilename = photo.getOriginalFilename();
-            String fileExtension = originalFilename != null ? 
-                originalFilename.substring(originalFilename.lastIndexOf(".")) : "";
+            String fileExtension = originalFilename != null && originalFilename.contains(".") ? 
+                originalFilename.substring(originalFilename.lastIndexOf(".")) : ".jpg";
             String filename = UUID.randomUUID().toString() + fileExtension;
             
             // Save file
             Path filePath = uploadPath.resolve(filename);
             Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
             
-            return uploadDir + filename;
+            // Return relative path for serving via /uploads/** resource handler
+            // The resource handler maps /uploads/** to the uploadDir, so we return just "uploads/filename"
+            // This works for both local (uploads/) and Render (/opt/render/project/src/uploads/) deployments
+            return "uploads/" + filename;
         } catch (IOException e) {
             throw new RuntimeException("Failed to save photo: " + e.getMessage());
         }
