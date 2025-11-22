@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: public-service-platform
+    env: java
+    buildCommand: cd backend && mvn clean package -DskipTests
+    startCommand: cd backend && java -jar target/issue-reporting-platform-0.0.1-SNAPSHOT.jar
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 8080
+    healthCheckPath: /actuator/health
+
+databases:
+  - name: public-service-db
+    databaseName: public_service_issues
+    user: public_service_user
+    plan: free
+

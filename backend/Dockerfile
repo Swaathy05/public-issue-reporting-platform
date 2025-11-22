@@ -23,13 +23,13 @@ RUN mkdir -p /app/uploads
 # Copy the built JAR from builder stage
 COPY --from=builder /app/target/*.jar app.jar
 
-# Expose port (Railway will set PORT env var)
+# Expose port (Render sets PORT env var)
 EXPOSE 8080
 
-# Health check (Railway handles this via railway.toml)
-# HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-#   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-8080}/actuator/health || exit 1
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-8080}/actuator/health || exit 1
 
 # Run the application
-# Railway sets PORT environment variable
+# Render sets PORT environment variable automatically
 ENTRYPOINT ["sh", "-c", "java -jar -Dserver.port=${PORT:-8080} app.jar"]
